@@ -4,7 +4,6 @@
 #include <math.h>
 #include "geometry.h"
 
-static PIXEL *pixels;
 static TGAIMG tgaimg;
 static int width = 100;
 static int height = 100;
@@ -46,26 +45,16 @@ int init_tga_data(int w, int h)
         width = w;
         height = h;
         pixeln = w * h;
-        pixels = (PIXEL *) malloc(pixeln * sizeof(PIXEL));
-        for(int i = 0; i < pixeln; i++) {
-                pixels[i].r = 0;
-                pixels[i].g = 0;
-                pixels[i].b = 0;
-                pixels[i].a = 255;
-        }
-        tgaimg.data = pixels;
-
-        return 1;
+        tgaimg.data = (PIXEL *) malloc(pixeln * sizeof(PIXEL));
+        for(int i = 0; i < pixeln; i++) tgaimg.data[i] = COLOR_BLACK;
+        return 0;
 }
 
 int set_pixel(int x, int y, PIXEL color, _Bool steep)
 {
         if(steep) swapcrd(x, y);
         if(tgaimg.data == NULL) return 1;
-        tgaimg.data[x + y * width].r = color.r;
-        tgaimg.data[x + y * width].g = color.g;
-        tgaimg.data[x + y * width].b = color.b;
-        tgaimg.data[x + y * width].a = 255;
+        tgaimg.data[x + y * width] = color;
         return 0;
 }
 
@@ -97,30 +86,24 @@ int triangle(Vec3f v0, Vec3f v1, Vec3f v2, Vec3f vt0, Vec3f vt1, Vec3f vt2,
         float maxx = max(v0.x, v1.x, v2.x);
         float miny = min(v0.y, v1.y, v2.y);
         float maxy = max(v0.y, v1.y, v2.y);
-        BARCOORD vbc, tbc;
+        BARCOORD bc;
         float zval;
-        int zidx;
-        PIXEL color = {255, 255, 255, 255};
-        float r1;
+        int zidx, tx, ty;
+        PIXEL color = {0, 0, 0, 255};
         for(int x = minx; x <= maxx; x++) {
                 for(int y = miny; y <= maxy; y++) {
-                        r1 = (v1.z - v0.z) / (maxx - minx) * (x - minx) + v0.z;
-                        // r1 = (v1.z - v0.z) / (v1.x - v0.x) * (x - v0.x) + v0.z;
-                        // r1 = (maxx - x) / (maxx - minx) * v0.z + (x - minx) / (maxx - minx) * v1.z;
-                        // r2 = v2.z;
-                        // zval = (v2.z - r1) / (maxy - miny) * (y - miny) + r1;
-                        // zval = (v2.z - r1) / (v2.y - v0.y) * (y - v0.y) + r1;
-                        // zval  = (maxy - y) / (maxy - miny) * r1   + (y - miny) / (maxy - miny) * v2.z;
-                        vbc = _comp_bar_coord(v0, v1, v2, (Vec2i) {x, y});
-                        if (vbc.x < 0 || vbc.y < 0 || vbc.z < 0) continue;
+                        /* no barycentric coordinates bilinear(?) interpolation
+                        float r1 = (v1.z - v0.z) / (maxx - minx) * (x - minx) + v0.z;
+                        zval = (v2.z - r1) / (maxy - miny) * (y - miny) + r1; */
+                        bc = _comp_bar_coord(v0, v1, v2, (Vec2i) {x, y});
+                        if (bc.x < 0 || bc.y < 0 || bc.z < 0) continue;
                         zidx = x + y * width;
-                        zval = v0.z * vbc.x + v1.z * vbc.y + v2.z * vbc.z;
-                        // printf("x=%d, y=%d, zval=%.10f, r1=%.10f, r2=%.10f, p=%.10f, p1=%.10f\n", x, y, zval, r1, r2, p, p1);
+                        zval = v0.z * bc.x + v1.z * bc.y + v2.z * bc.z;
                         if (zbuf[zidx] > zval) continue;
-                        zbuf[zidx] = zval;
-                        tbc = _comp_bar_coord(vt0, vt1, vt2, (Vec2i) {x, y});
-                        // int tx =
-                        color = COLOR_WHITE;// get_pixel(x, y, texture);
+                        zbuf[zidx] = zval;;
+                        tx = (int)(vt0.x * bc.x + vt1.x * bc.y + vt2.x * bc.z + 0.5);
+                        ty = (int)(vt0.y * bc.x + vt1.y * bc.y + vt2.y * bc.z + 0.5);
+                        color = get_pixel(tx, ty, texture);
                         color.r = color.r * intensity;
                         color.g = color.g * intensity;
                         color.b = color.b * intensity;
@@ -158,33 +141,34 @@ int write_free_tga(char *filename)
         }
 
         fclose(tgaf);
-        free(pixels);
+        free(tgaimg.data);
         return 0;
 }
 
 TGAIMG read_tga(char *filename)
 {
-        TGAIMG tgaimg;
+        TGAIMG rtgaimg;
         FILE *tgaf = fopen(filename, "r");
+        init_tga_data(1024, 1024);
 
-        tgaimg.header.idlength = fgetc(tgaf);
-        tgaimg.header.colourmaptype = fgetc(tgaf);
-        tgaimg.header.datatypecode = fgetc(tgaf);
-        fread(&tgaimg.header.colourmaporigin, 2, 1, tgaf);
-        fread(&tgaimg.header.colourmaplength, 2, 1, tgaf);
-        tgaimg.header.colourmapdepth = fgetc(tgaf);
-        fread(&tgaimg.header.x_origin, 2, 1, tgaf);
-        fread(&tgaimg.header.y_origin, 2, 1, tgaf);
-        fread(&tgaimg.header.width, 2, 1, tgaf);
-        fread(&tgaimg.header.height, 2, 1, tgaf);
-        tgaimg.header.bitsperpixel = fgetc(tgaf);
-        tgaimg.header.imagedescriptor = fgetc(tgaf);
+        rtgaimg.header.idlength = fgetc(tgaf);
+        rtgaimg.header.colourmaptype = fgetc(tgaf);
+        rtgaimg.header.datatypecode = fgetc(tgaf);
+        fread(&rtgaimg.header.colourmaporigin, 2, 1, tgaf);
+        fread(&rtgaimg.header.colourmaplength, 2, 1, tgaf);
+        rtgaimg.header.colourmapdepth = fgetc(tgaf);
+        fread(&rtgaimg.header.x_origin, 2, 1, tgaf);
+        fread(&rtgaimg.header.y_origin, 2, 1, tgaf);
+        fread(&rtgaimg.header.width, 2, 1, tgaf);
+        fread(&rtgaimg.header.height, 2, 1, tgaf);
+        rtgaimg.header.bitsperpixel = fgetc(tgaf);
+        rtgaimg.header.imagedescriptor = fgetc(tgaf);
 
-        size_t imgdatasize = tgaimg.header.width *
-                 tgaimg.header.height * sizeof(PIXEL);
-        tgaimg.data = (PIXEL *) malloc(imgdatasize);
-        fread(tgaimg.data, imgdatasize, 1, tgaf);
+        size_t imgdatasize = rtgaimg.header.width *
+                 rtgaimg.header.height * sizeof(PIXEL);
+        rtgaimg.data = (PIXEL *) malloc(imgdatasize);
+        fread(rtgaimg.data, imgdatasize, 1, tgaf);
 
         fclose(tgaf);
-        return tgaimg;
+        return rtgaimg;
 }

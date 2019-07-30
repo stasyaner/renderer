@@ -62,11 +62,12 @@ int load_model()
 }
 
 int draw_model() {
-        int width = 800;
-        int height = 800;
+        int width = 1000;
+        int height = 1000;
         init_tga_data(width, height);
         FACE f;
         VERTEX v0, v1, v2, vt0, vt1, vt2;
+        Vec3f ab, ac, tricprod, trinorm;
         float intensity, zbuf[width * height];
         for (int i = width * height; i--; zbuf[i] = INT_MIN);
         Vec3f lightdir = {0, 0, -1};
@@ -79,24 +80,41 @@ int draw_model() {
                 vt1 = model.vtexture[f.vt1-1];
                 vt2 = model.vtexture[f.vt2-1];
 
-                VERTEX v2mv0 = {v2.x - v0.x, v2.y - v0.y, v2.z - v0.z};
-                VERTEX v1mv0 = {v1.x - v0.x, v1.y - v0.y, v1.z - v0.z};
-                VERTEX v2mxorvm1 = {v2mv0.y*v1mv0.z - v2mv0.z*v1mv0.y,
-                                    v2mv0.z*v1mv0.x - v2mv0.x*v1mv0.z,
-                                    v2mv0.x*v1mv0.y - v2mv0.y*v1mv0.x};
-                float norm = sqrt(v2mxorvm1.x * v2mxorvm1.x + v2mxorvm1.y*v2mxorvm1.y + v2mxorvm1.z*v2mxorvm1.z);
-                VERTEX vnorm = {v2mxorvm1.x/norm, v2mxorvm1.y/norm, v2mxorvm1.z/norm};
-                intensity = vnorm.x*lightdir.x + vnorm.y*lightdir.y + vnorm.z*lightdir.z;
+                vsub(v2, v0, ab);
+                vsub(v1, v0, ac);
+                vcproduct(ab, ac, tricprod);
+                vnormalize(tricprod, trinorm);
+                vsprod(trinorm, lightdir, intensity);
 
-                v0.x = (v0.x + 1.) * width / 2.;
-                v0.y = (v0.y + 1.) * height / 2.;
-                v0.z = (v0.z + 1.) * height / 2.;
-                v1.x = (v1.x + 1.) * width / 2.;
-                v1.y = (v1.y + 1.) * height / 2.;
-                v1.z = (v1.z + 1.) * height / 2.;
-                v2.x = (v2.x + 1.) * width / 2.;
-                v2.y = (v2.y + 1.) * height / 2.;
-                v2.z = (v2.z + 1.) * height / 2.;
+                v0.x = v0.x / (1 - v0.z / 3);
+                v0.y = v0.y / (1 - v0.z / 3);
+                v0.z = v0.z / (1 - v0.z / 3);
+                v1.x = v1.x / (1 - v1.z / 3);
+                v1.y = v1.y / (1 - v1.z / 3);
+                v1.z = v1.z / (1 - v1.z / 3);
+                v2.x = v2.x / (1 - v2.z / 3);
+                v2.y = v2.y / (1 - v2.z / 3);
+                v2.z = v2.z / (1 - v2.z / 3);
+
+                v0.x = (v0.x + 1.) * 400;
+                v0.y = (v0.y + 1.) * 400;
+                v1.x = (v1.x + 1.) * 400;
+                v1.y = (v1.y + 1.) * 400;
+                v2.x = (v2.x + 1.) * 400;
+                v2.y = (v2.y + 1.) * 400;
+
+                v0.x += 100;
+                v0.y += 100;
+                v1.x += 100;
+                v1.y += 100;
+                v2.x += 100;
+                v2.y += 100;
+                vt0.x = vt0.x * model.texture.header.width;
+                vt0.y = vt0.y * model.texture.header.height;
+                vt1.x = vt1.x * model.texture.header.width;
+                vt1.y = vt1.y * model.texture.header.height;
+                vt2.x = vt2.x * model.texture.header.width;
+                vt2.y = vt2.y * model.texture.header.height;
 
                 if (intensity > 0)
                         triangle(v0, v1, v2, vt0, vt1, vt2, zbuf, model.texture,
