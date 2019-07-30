@@ -1,4 +1,4 @@
-CFLAGS=-Wall -std=c11 -pedantic-errors
+CFLAGS=-Wall -std=c99 -pedantic-errors
 BUILD_DIR=build_res
 
 all: clean renderer
