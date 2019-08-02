@@ -23,6 +23,33 @@
         vnormres.y = v.y / vabst;\
         vnormres.z = v.z / vabst;\
 } while(0)
+#define mmulv(m1, v, mres) do {\
+        float t[4] = {v.x, v.y, v.z, 1};\
+        for (int i = 0; i < 4; i++) {\
+                mres[i] = 0;\
+                for (int j = 0; j < 4; j++)\
+                        mres[i] += m1[i][j] * t[j];\
+        }\
+} while(0)
+#define mmulm(m1, m2, mres) do {\
+        for (int i = 0; i < 4; i++)\
+                for (int j = 0; j < 4; j++) {\
+                        mres[i][j] = 0;\
+                        for (int k = 0; k < 4; k++)\
+                                mres[i][j] += m1[i][k] * m2[k][j];\
+                }\
+} while(0)
+#define m2v(m, v) do {\
+        v.x = m[0] / m[3];\
+        v.y = m[1] / m[3];\
+        v.z = m[2] / m[3];\
+} while(0)
+#define viewport(x, y, w, h, d, m) do {\
+        m[0][0]= w/2.f; m[0][1]=     0; m[0][2]=     0; m[0][3]= x+w/2.f;\
+        m[1][0]=     0; m[1][1]= h/2.f; m[1][2]=     0; m[1][3]= y+h/2.f;\
+        m[2][0]=     0; m[2][1]=     0; m[2][2]= d/2.f; m[2][3]=   d/2.f;\
+        m[3][0]=     0; m[3][1]=     0; m[3][2]=     0; m[3][3]=       1;\
+} while(0)
 
 typedef struct {
         float x, y, z;

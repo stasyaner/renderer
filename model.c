@@ -62,8 +62,9 @@ int load_model()
 }
 
 int draw_model() {
-        int width = 1000;
-        int height = 1000;
+        int width = 800;
+        int height = 800;
+        int depth = 255;
         init_tga_data(width, height);
         FACE f;
         VERTEX v0, v1, v2, vt0, vt1, vt2;
@@ -71,6 +72,14 @@ int draw_model() {
         float intensity, zbuf[width * height];
         for (int i = width * height; i--; zbuf[i] = INT_MIN);
         Vec3f lightdir = {0, 0, -1};
+        Vec3f camera = {0, 0, 3};
+        float mv0[4], mv1[4], mv2[4], vp[4][4], mres[4][4];
+        float projection[4][4] = {{1, 0,           0, 0},
+                                  {0, 1,           0, 0},
+                                  {0, 0,           1, 0},
+                                  {0, 0, -1/camera.z, 1}};
+        viewport(width/8, height/8, width*3/4, height*3/4, depth, vp);
+        mmulm(vp, projection, mres);
         for(int i = 0; i < model.fnum; i++) {
                 f = model.faces[i];
                 v0 = model.vertices[f.v0-1];
@@ -86,29 +95,13 @@ int draw_model() {
                 vnormalize(tricprod, trinorm);
                 vsprod(trinorm, lightdir, intensity);
 
-                v0.x = v0.x / (1 - v0.z / 3);
-                v0.y = v0.y / (1 - v0.z / 3);
-                v0.z = v0.z / (1 - v0.z / 3);
-                v1.x = v1.x / (1 - v1.z / 3);
-                v1.y = v1.y / (1 - v1.z / 3);
-                v1.z = v1.z / (1 - v1.z / 3);
-                v2.x = v2.x / (1 - v2.z / 3);
-                v2.y = v2.y / (1 - v2.z / 3);
-                v2.z = v2.z / (1 - v2.z / 3);
+                mmulv(mres, v0, mv0);
+                mmulv(mres, v1, mv1);
+                mmulv(mres, v2, mv2);
+                m2v(mv0, v0);
+                m2v(mv1, v1);
+                m2v(mv2, v2);
 
-                v0.x = (v0.x + 1.) * 400;
-                v0.y = (v0.y + 1.) * 400;
-                v1.x = (v1.x + 1.) * 400;
-                v1.y = (v1.y + 1.) * 400;
-                v2.x = (v2.x + 1.) * 400;
-                v2.y = (v2.y + 1.) * 400;
-
-                v0.x += 100;
-                v0.y += 100;
-                v1.x += 100;
-                v1.y += 100;
-                v2.x += 100;
-                v2.y += 100;
                 vt0.x = vt0.x * model.texture.header.width;
                 vt0.y = vt0.y * model.texture.header.height;
                 vt1.x = vt1.x * model.texture.header.width;
