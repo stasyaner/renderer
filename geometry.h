@@ -50,6 +50,16 @@
         m[2][0]=     0; m[2][1]=     0; m[2][2]= d/2.f; m[2][3]=   d/2.f;\
         m[3][0]=     0; m[3][1]=     0; m[3][2]=     0; m[3][3]=       1;\
 } while(0)
+#define lookat(e, c, u, r) do {\
+        Vec3f x, y, z;\
+        vsub(e, c, z); vnormalize(z, z);\
+        vcproduct(u, z, x); vnormalize(x, x);\
+        vcproduct(z, x, y); vnormalize(y, y);\
+        r[0][0]= x.x; r[0][1]= x.y; r[0][2]= x.z; r[1][3]= -c.x;\
+        r[1][0]= y.x; r[1][1]= y.y; r[1][2]= y.z; r[1][3]= -c.y;\
+        r[2][0]= z.x; r[2][1]= z.y; r[2][2]= z.z; r[2][3]= -c.z;\
+        r[3][0]=   0; r[3][1]=   0; r[3][2]=   0; r[3][3]=    1;\
+} while(0)
 
 typedef struct {
         float x, y, z;

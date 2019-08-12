@@ -22,7 +22,7 @@ int load_model()
         model.vertices = (VERTEX *) malloc(VERTEX_NUMBER_STEP * sizeof(VERTEX));
         model.faces = (FACE *) malloc(FACE_NUMBER_STEP * sizeof(FACE));
         model.vtexture = (VERTEX *) malloc(VTEXTURE_NUMBER_STEP * sizeof(VERTEX));
-        FILE *tf = fopen("/mnt/c/Users/stasyaner/Downloads/african_head.obj", "r");
+        FILE *tf = fopen("/Users/stasyaner/Downloads/african_head.obj", "r");
         while(!feof(tf))
         {
                 fgets(ts, MAXSTR, tf);
@@ -55,7 +55,7 @@ int load_model()
                         model.vtexture[model.vtnum++].z = z;
                 }
         }
-        model.texture = read_tga("/mnt/c/Users/stasyaner/Downloads/"
+        model.texture = read_tga("/Users/stasyaner/Downloads/"
                                  "african_head_diffuse_no_rle.tga");
         fclose(tf);
         return 0;
@@ -69,17 +69,25 @@ int draw_model() {
         FACE f;
         VERTEX v0, v1, v2, vt0, vt1, vt2;
         Vec3f ab, ac, tricprod, trinorm;
-        float intensity, zbuf[width * height];
+        float intensity, zbuf[width * height], mv0[4], mv1[4], mv2[4], vp[4][4],
+              model_view[4][4], mres1[4][4], mres2[4][4], camnorm;
         for (int i = width * height; i--; zbuf[i] = INT_MIN);
         Vec3f lightdir = {0, 0, -1};
-        Vec3f camera = {0, 0, 3};
-        float mv0[4], mv1[4], mv2[4], vp[4][4], mres[4][4];
+        vnormalize(lightdir, lightdir);
+        Vec3f camera;
+        Vec3f center = {0, 0, 0};
+        Vec3f eye = {1, 1, 3};
+        Vec3f up = {0, 1, 0};
+        vsub(eye, center, camera);
+        vabs(camera, camnorm);
         float projection[4][4] = {{1, 0,           0, 0},
                                   {0, 1,           0, 0},
                                   {0, 0,           1, 0},
-                                  {0, 0, -1/camera.z, 1}};
+                                  {0, 0, -1.f/camnorm, 1}};
         viewport(width/8, height/8, width*3/4, height*3/4, depth, vp);
-        mmulm(vp, projection, mres);
+        lookat(eye, center, up, model_view);
+        mmulm(vp, projection, mres1);
+        mmulm(mres1, model_view, mres2);
         for(int i = 0; i < model.fnum; i++) {
                 f = model.faces[i];
                 v0 = model.vertices[f.v0-1];
@@ -95,9 +103,9 @@ int draw_model() {
                 vnormalize(tricprod, trinorm);
                 vsprod(trinorm, lightdir, intensity);
 
-                mmulv(mres, v0, mv0);
-                mmulv(mres, v1, mv1);
-                mmulv(mres, v2, mv2);
+                mmulv(mres2, v0, mv0);
+                mmulv(mres2, v1, mv1);
+                mmulv(mres2, v2, mv2);
                 m2v(mv0, v0);
                 m2v(mv1, v1);
                 m2v(mv2, v2);
@@ -113,7 +121,8 @@ int draw_model() {
                         triangle(v0, v1, v2, vt0, vt1, vt2, zbuf, model.texture,
                                  intensity);
         }
-        write_free_tga("/mnt/c/Users/stasyaner/Desktop/african_head.tga");
+        write_free_tga("/Users/stasyaner/Desktop/african_head.tga");
+        //write_free_tga("/mnt/c/Users/stasyaner/Desktop/african_head.tga");
         return 0;
 }
 
