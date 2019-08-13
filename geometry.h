@@ -10,7 +10,7 @@
 #define vsprod(v0, v1, resv) do {\
         resv = v0.x*v1.x + v0.y*v1.y + v0.z*v1.z;\
 } while(0)
-#define vsub(v0, v1, resv) do {\
+#define vsub(v1, v0, resv) do {\
         resv.x = v1.x - v0.x;\
         resv.y = v1.y - v0.y;\
         resv.z = v1.z - v0.z;\

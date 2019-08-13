@@ -97,8 +97,8 @@ int draw_model() {
                 vt1 = model.vtexture[f.vt1-1];
                 vt2 = model.vtexture[f.vt2-1];
 
-                vsub(v2, v0, ab);
-                vsub(v1, v0, ac);
+                vsub(v0, v2, ab);
+                vsub(v0, v1, ac);
                 vcproduct(ab, ac, tricprod);
                 vnormalize(tricprod, trinorm);
                 vsprod(trinorm, lightdir, intensity);
