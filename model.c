@@ -8,7 +8,8 @@
 static MODEL model = {
         .vnum = 0,
         .fnum = 0,
-        .vtnum = 0
+        .vtnum = 0,
+        .vnnum = 0
 };
 
 int load_model()
@@ -19,9 +20,11 @@ int load_model()
         int vlimit = VERTEX_NUMBER_STEP;
         int flimit = FACE_NUMBER_STEP;
         int vtlimit = VTEXTURE_NUMBER_STEP;
+        int vnlimit = VNORMAL_NUMBER_STEP;
         model.vertices = (Vec3f *) malloc(VERTEX_NUMBER_STEP * sizeof(Vec3f));
         model.faces = (FACE *) malloc(FACE_NUMBER_STEP * sizeof(FACE));
         model.vtexture = (Vec3f *) malloc(VTEXTURE_NUMBER_STEP * sizeof(Vec3f));
+        model.vnormals = (Vec3f *) malloc(VNORMAL_NUMBER_STEP * sizeof(Vec3f));
         FILE *tf = fopen("/Users/stasyaner/Downloads/african_head.obj", "r");
         while(!feof(tf))
         {
@@ -53,6 +56,14 @@ int load_model()
                         model.vtexture[model.vtnum].x = x;
                         model.vtexture[model.vtnum].y = y;
                         model.vtexture[model.vtnum++].z = z;
+                } else if(ts[0] == 'v' && ts[1] == 'n') {
+                        sscanf(ts, "%*s %f %f %f", &x, &y, &z);
+                        if(model.vtnum == vtlimit - 1)
+                                model.vnormals = (Vec3f *) realloc(model.vnormals,
+                                (vnlimit += VNORMAL_NUMBER_STEP) * sizeof(Vec3f));
+                        model.vnormals[model.vnnum].x = x;
+                        model.vnormals[model.vnnum].y = y;
+                        model.vnormals[model.vnnum++].z = z;
                 }
         }
         model.texture = read_tga("/Users/stasyaner/Downloads/"

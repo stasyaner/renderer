@@ -6,7 +6,7 @@
 #define MAXSTR                100
 #define VERTEX_NUMBER_STEP    500
 #define FACE_NUMBER_STEP      500
-#define NORMAL_NUMBER_STEP    500
+#define VNORMAL_NUMBER_STEP   500
 #define VTEXTURE_NUMBER_STEP  500
 
 typedef struct {
@@ -18,8 +18,8 @@ typedef struct {
         int vnum;
         FACE *faces;
         int fnum;
-        Vec3f *normals;
-        int nnum;
+        Vec3f *vnormals;
+        int vnnum;
         TGAIMG texture;
         Vec3f *vtexture;
         int vtnum;
