@@ -19,9 +19,9 @@ int load_model()
         int vlimit = VERTEX_NUMBER_STEP;
         int flimit = FACE_NUMBER_STEP;
         int vtlimit = VTEXTURE_NUMBER_STEP;
-        model.vertices = (VERTEX *) malloc(VERTEX_NUMBER_STEP * sizeof(VERTEX));
+        model.vertices = (Vec3f *) malloc(VERTEX_NUMBER_STEP * sizeof(Vec3f));
         model.faces = (FACE *) malloc(FACE_NUMBER_STEP * sizeof(FACE));
-        model.vtexture = (VERTEX *) malloc(VTEXTURE_NUMBER_STEP * sizeof(VERTEX));
+        model.vtexture = (Vec3f *) malloc(VTEXTURE_NUMBER_STEP * sizeof(Vec3f));
         FILE *tf = fopen("/Users/stasyaner/Downloads/african_head.obj", "r");
         while(!feof(tf))
         {
@@ -29,8 +29,8 @@ int load_model()
                 if(ts[0] == 'v' && ts[1] == ' ') {
                         sscanf(ts, "%*s %f %f %f", &x, &y, &z);
                         if(model.vnum == vlimit - 1)
-                                model.vertices = (VERTEX *) realloc(model.vertices,
-                                (vlimit += VERTEX_NUMBER_STEP) * sizeof(VERTEX));
+                                model.vertices = (Vec3f *) realloc(model.vertices,
+                                (vlimit += VERTEX_NUMBER_STEP) * sizeof(Vec3f));
                         model.vertices[model.vnum].x = x;
                         model.vertices[model.vnum].y = y;
                         model.vertices[model.vnum++].z = z;
@@ -48,8 +48,8 @@ int load_model()
                 } else if(ts[0] == 'v' && ts[1] == 't') {
                         sscanf(ts, "%*s %f %f %f", &x, &y, &z);
                         if(model.vtnum == vtlimit - 1)
-                                model.vtexture = (VERTEX *) realloc(model.vtexture,
-                                (vtlimit += VTEXTURE_NUMBER_STEP) * sizeof(VERTEX));
+                                model.vtexture = (Vec3f *) realloc(model.vtexture,
+                                (vtlimit += VTEXTURE_NUMBER_STEP) * sizeof(Vec3f));
                         model.vtexture[model.vtnum].x = x;
                         model.vtexture[model.vtnum].y = y;
                         model.vtexture[model.vtnum++].z = z;
@@ -67,12 +67,12 @@ int draw_model() {
         int depth = 255;
         init_tga_data(width, height);
         FACE f;
-        VERTEX v0, v1, v2, vt0, vt1, vt2;
+        Vec3f v0, v1, v2, vt0, vt1, vt2;
         Vec3f ab, ac, tricprod, trinorm;
         float intensity, zbuf[width * height], mv0[4], mv1[4], mv2[4], vp[4][4],
               model_view[4][4], mres1[4][4], mres2[4][4], camnorm;
         for (int i = width * height; i--; zbuf[i] = INT_MIN);
-        Vec3f lightdir = {0, 0, -1};
+        Vec3f lightdir = {1, -1, 1};
         vnormalize(lightdir, lightdir);
         Vec3f camera;
         Vec3f center = {0, 0, 0};
