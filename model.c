@@ -25,7 +25,7 @@ int load_model()
         model.faces = (FACE *) malloc(FACE_NUMBER_STEP * sizeof(FACE));
         model.vtexture = (Vec3f *) malloc(VTEXTURE_NUMBER_STEP * sizeof(Vec3f));
         model.vnormals = (Vec3f *) malloc(VNORMAL_NUMBER_STEP * sizeof(Vec3f));
-        FILE *tf = fopen("/Users/stasyaner/Downloads/african_head.obj", "r");
+        FILE *tf = fopen("/mnt/c/Users/stasyaner/Downloads/african_head.obj", "r");
         while(!feof(tf))
         {
                 fgets(ts, MAXSTR, tf);
@@ -58,7 +58,7 @@ int load_model()
                         model.vtexture[model.vtnum++].z = z;
                 } else if(ts[0] == 'v' && ts[1] == 'n') {
                         sscanf(ts, "%*s %f %f %f", &x, &y, &z);
-                        if(model.vtnum == vtlimit - 1)
+                        if(model.vnnum == vnlimit - 1)
                                 model.vnormals = (Vec3f *) realloc(model.vnormals,
                                 (vnlimit += VNORMAL_NUMBER_STEP) * sizeof(Vec3f));
                         model.vnormals[model.vnnum].x = x;
@@ -66,7 +66,7 @@ int load_model()
                         model.vnormals[model.vnnum++].z = z;
                 }
         }
-        model.texture = read_tga("/Users/stasyaner/Downloads/"
+        model.texture = read_tga("/mnt/c/Users/stasyaner/Downloads/"
                                  "african_head_diffuse_no_rle.tga");
         fclose(tf);
         return 0;
@@ -132,8 +132,8 @@ int draw_model() {
                         triangle(v0, v1, v2, vt0, vt1, vt2, zbuf, model.texture,
                                  intensity);
         }
-        write_free_tga("/Users/stasyaner/Desktop/african_head.tga");
-        //write_free_tga("/mnt/c/Users/stasyaner/Desktop/african_head.tga");
+        // write_free_tga("/Users/stasyaner/Desktop/african_head.tga");
+        write_free_tga("/mnt/c/Users/stasyaner/Desktop/african_head.tga");
         return 0;
 }
 
