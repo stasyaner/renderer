@@ -16,7 +16,7 @@ int load_model()
 {
         char ts[MAXSTR];
         float x, y, z;
-        int v0, v1, v2, vt0, vt1, vt2;
+        int v0, v1, v2, vt0, vt1, vt2, vn0, vn1, vn2;
         int vlimit = VERTEX_NUMBER_STEP;
         int flimit = FACE_NUMBER_STEP;
         int vtlimit = VTEXTURE_NUMBER_STEP;
@@ -38,7 +38,8 @@ int load_model()
                         model.vertices[model.vnum].y = y;
                         model.vertices[model.vnum++].z = z;
                 } else if(ts[0] == 'f') {
-                        sscanf(ts, "%*s %d/%d/%*d %d/%d/%*d %d/%d", &v0, &vt0, &v1, &vt1, &v2, &vt2);
+                        sscanf(ts, "%*s %d/%d/%d %d/%d/%d %d/%d/%d",
+                                &v0, &vt0, &vn0, &v1, &vt1, &vn1, &v2, &vt2, &vn2);
                         if(model.fnum == flimit - 1)
                                 model.faces = (FACE *) realloc(model.faces,
                                 (flimit += FACE_NUMBER_STEP) * sizeof(FACE));
@@ -47,7 +48,10 @@ int load_model()
                         model.faces[model.fnum].v2 = v2;
                         model.faces[model.fnum].vt0 = vt0;
                         model.faces[model.fnum].vt1 = vt1;
-                        model.faces[model.fnum++].vt2 = vt2;
+                        model.faces[model.fnum].vt2 = vt2;
+                        model.faces[model.fnum].vn0 = vn0;
+                        model.faces[model.fnum].vn1 = vn1;
+                        model.faces[model.fnum++].vn2 = vn2;
                 } else if(ts[0] == 'v' && ts[1] == 't') {
                         sscanf(ts, "%*s %f %f %f", &x, &y, &z);
                         if(model.vtnum == vtlimit - 1)
@@ -78,9 +82,8 @@ int draw_model() {
         int depth = 255;
         init_tga_data(width, height);
         FACE f;
-        Vec3f v0, v1, v2, vt0, vt1, vt2;
-        Vec3f ab, ac, tricprod, trinorm;
-        float intensity, zbuf[width * height], mv0[4], mv1[4], mv2[4], vp[4][4],
+        Vec3f v0, v1, v2, vt0, vt1, vt2, vn0, vn1, vn2;
+        float intensities[3], zbuf[width * height], mv0[4], mv1[4], mv2[4], vp[4][4],
               model_view[4][4], mres1[4][4], mres2[4][4], camnorm;
         for (int i = width * height; i--; zbuf[i] = INT_MIN);
         Vec3f lightdir = {1, -1, 1};
@@ -91,9 +94,9 @@ int draw_model() {
         Vec3f up = {0, 1, 0};
         vsub(eye, center, camera);
         vabs(camera, camnorm);
-        float projection[4][4] = {{1, 0,           0, 0},
-                                  {0, 1,           0, 0},
-                                  {0, 0,           1, 0},
+        float projection[4][4] = {{1, 0,            0, 0},
+                                  {0, 1,            0, 0},
+                                  {0, 0,            1, 0},
                                   {0, 0, -1.f/camnorm, 1}};
         viewport(width/8, height/8, width*3/4, height*3/4, depth, vp);
         lookat(eye, center, up, model_view);
@@ -107,12 +110,12 @@ int draw_model() {
                 vt0 = model.vtexture[f.vt0-1];
                 vt1 = model.vtexture[f.vt1-1];
                 vt2 = model.vtexture[f.vt2-1];
-
-                vsub(v0, v2, ab);
-                vsub(v0, v1, ac);
-                vcproduct(ab, ac, tricprod);
-                vnormalize(tricprod, trinorm);
-                vsprod(trinorm, lightdir, intensity);
+                vn0 = model.vnormals[f.vn0-1]; vnormalize(vn0, vn0);
+                vn1 = model.vnormals[f.vn1-1]; vnormalize(vn1, vn1);
+                vn2 = model.vnormals[f.vn2-1]; vnormalize(vn2, vn2);
+                vsprod(vn0, lightdir, intensities[0]);
+                vsprod(vn1, lightdir, intensities[1]);
+                vsprod(vn2, lightdir, intensities[2]);
 
                 mmulv(mres2, v0, mv0);
                 mmulv(mres2, v1, mv1);
@@ -128,9 +131,8 @@ int draw_model() {
                 vt2.x = vt2.x * model.texture.header.width;
                 vt2.y = vt2.y * model.texture.header.height;
 
-                if (intensity > 0)
-                        triangle(v0, v1, v2, vt0, vt1, vt2, zbuf, model.texture,
-                                 intensity);
+                triangle(v0, v1, v2, vt0, vt1, vt2, zbuf, model.texture,
+                         intensities);
         }
         write_free_tga("/mnt/c/Users/stasyaner/Desktop/african_head.tga");
         return 0;

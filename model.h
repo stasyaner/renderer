@@ -10,7 +10,7 @@
 #define VTEXTURE_NUMBER_STEP  500
 
 typedef struct {
-        int v0, v1, v2, vt0, vt1, vt2;
+        int v0, v1, v2, vt0, vt1, vt2, vn0, vn1, vn2;
 } FACE;
 
 typedef struct {

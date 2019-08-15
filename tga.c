@@ -79,7 +79,7 @@ int line(int x0, int y0, int x1, int y1, PIXEL color)
 }
 
 int triangle(Vec3f v0, Vec3f v1, Vec3f v2, Vec3f vt0, Vec3f vt1, Vec3f vt2,
-             float *zbuf, TGAIMG texture, float intensity)
+             float *zbuf, TGAIMG texture, float *intensities)
 {
         if(tgaimg.data == NULL) return 1;
         float minx = min(v0.x, v1.x, v2.x);
@@ -87,7 +87,7 @@ int triangle(Vec3f v0, Vec3f v1, Vec3f v2, Vec3f vt0, Vec3f vt1, Vec3f vt2,
         float miny = min(v0.y, v1.y, v2.y);
         float maxy = max(v0.y, v1.y, v2.y);
         BARCOORD bc;
-        float zval;
+        float zval, intensity;
         int zidx, tx, ty;
         PIXEL color = {0, 0, 0, 255};
         for(int x = minx; x <= maxx; x++) {
@@ -99,14 +99,18 @@ int triangle(Vec3f v0, Vec3f v1, Vec3f v2, Vec3f vt0, Vec3f vt1, Vec3f vt2,
                         if (bc.x < 0 || bc.y < 0 || bc.z < 0) continue;
                         zidx = x + y * width;
                         zval = v0.z * bc.x + v1.z * bc.y + v2.z * bc.z;
+                        intensity = intensities[0] * bc.x +
+                                    intensities[1] * bc.y +
+                                    intensities[2] * bc.z;
+                        if(signbit(intensity)) intensity = 0;
                         if (zbuf[zidx] > zval) continue;
                         zbuf[zidx] = zval;;
                         tx = (int)(vt0.x * bc.x + vt1.x * bc.y + vt2.x * bc.z + 0.5);
                         ty = (int)(vt0.y * bc.x + vt1.y * bc.y + vt2.y * bc.z + 0.5);
                         color = get_pixel(tx, ty, texture);
-                        color.r = color.r * intensity;
-                        color.g = color.g * intensity;
-                        color.b = color.b * intensity;
+                        color.r *= intensity;
+                        color.g *= intensity;
+                        color.b *= intensity;
                         set_pixel(x, y, color, 0);
                 }
         }
