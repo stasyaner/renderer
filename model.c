@@ -132,7 +132,6 @@ int draw_model() {
                         triangle(v0, v1, v2, vt0, vt1, vt2, zbuf, model.texture,
                                  intensity);
         }
-        // write_free_tga("/Users/stasyaner/Desktop/african_head.tga");
         write_free_tga("/mnt/c/Users/stasyaner/Desktop/african_head.tga");
         return 0;
 }
